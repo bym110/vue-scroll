@@ -37,7 +37,13 @@
             */
             initData: {
                 type: Object,
-                value: {}
+                default() {
+                    return {
+                        width: 8,
+                        color: '#a9a9a9',
+                        hoverColor: '#817878'
+                    }
+                }
             }
         },
         data() {
@@ -101,7 +107,7 @@
                 if (scrollContent.offsetWidth > scrollBox.offsetWidth) {
                     this.showScrollBarX = true;
                     this.$nextTick(function () {
-                        this.$refs.scrollBarYInner.onmousedown = this.onmousedownY
+                        this.$refs.scrollBarXInner.onmousedown = this.onmousedownX
                     })
                 } else {
                     this.showScrollBarX = false;
@@ -109,7 +115,7 @@
                 if (scrollContent.offsetHeight > scrollBox.offsetHeight) {
                     this.showScrollBarY = true;
                     this.$nextTick(function () {
-                        this.$refs.scrollBarXInner.onmousedown = this.onmousedownX
+                        this.$refs.scrollBarYInner.onmousedown = this.onmousedownY
                     })
                 } else {
                     this.showScrollBarY = false;
