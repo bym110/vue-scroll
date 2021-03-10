@@ -1,22 +1,24 @@
 <template>
     <div class="scroll-container">
         <div class="scroll-box" ref="scrollBox" @scroll="onscroll" @wheel="onwheel">
-            <div class="scroll-content" ref="scrollContent">
+            <div class="scroll-content" ref="scrollContent" >
                 <slot></slot>
             </div>
         </div>
-        <div v-if="showScrollBarX" class="scroll-bar-x" ref="scrollBarX" :style="{height: scrollObj.offsetY + 'px'}">
+        <div v-show="isShowScrollBarX" :class="isDragX? 'ondragX': ''" class="scroll-bar-x" ref="scrollBarX" :style="{height: scrollObj.offsetY + 'px'}">
             <div class="scroll-bar-x-inner"
                  ref="scrollBarXInner"
                  :style="scrollBarStyleX"
+                 @mousedown="onmousedownX"
                  @mouseenter="scrollBarStyleX.background = initData.hoverColor"
                  @mouseleave="scrollBarStyleX.background = initData.color"
             ></div>
         </div>
-        <div v-if="showScrollBarY" class="scroll-bar-y" ref="scrollBarY" style="border-radius: 3px" :style="{width: scrollObj.offsetX + 'px'}">
+        <div v-show="isShowScrollBarY" :class="isDragY? 'ondragY': ''" class="scroll-bar-y" ref="scrollBarY" style="border-radius: 3px" :style="{width: scrollObj.offsetX + 'px'}">
             <div class="scroll-bar-y-inner"
                  ref="scrollBarYInner"
                  :style="scrollBarStyleY"
+                 @mousedown="onmousedownY"
                  @mouseenter="scrollBarStyleY.background = initData.hoverColor"
                  @mouseleave="scrollBarStyleY.background = initData.color"
             ></div>
@@ -26,7 +28,7 @@
 
 <script>
     export default {
-        name: "scroll",
+        name: "m-scroll",
         props: {
             /*默认初始化数据
                 {
@@ -39,7 +41,7 @@
                 type: Object,
                 default() {
                     return {
-                        width: 8,
+                        width: 6,
                         color: '#a9a9a9',
                         hoverColor: '#817878'
                     }
@@ -71,10 +73,12 @@
                     top: 0
                 },
                 direction: 'vertical', // 鼠标滚轮 控制 滚动条方向
-                showScrollBarX: false, // 是否显示 横向滚动条
-                showScrollBarY: false, // 是否显示纵向滚动条
+                isShowScrollBarX: false, // 是否显示 横向滚动条
+                isShowScrollBarY: false, // 是否显示纵向滚动条
                 flag: true, // 触发底部事件状态
-                changeStatus: false // 内容区是否变化
+                changeStatus: false, // 内容区是否变化
+                isDragX: false, // 是否正在拖拽
+                isDragY: false // 是否正在拖拽
             }
         },
         methods: {
@@ -105,20 +109,14 @@
                     top: scrollBox.scrollTop > 0 ?scrollBox.scrollTop* this.scrollObj.yRadix - this.scrollObj.offsetX + 'px': this.scrollObj.offsetX + 'px'
                 }
                 if (scrollContent.offsetWidth > scrollBox.offsetWidth) {
-                    this.showScrollBarX = true;
-                    this.$nextTick(function () {
-                        this.$refs.scrollBarXInner.onmousedown = this.onmousedownX
-                    })
+                    this.isShowScrollBarX = true;
                 } else {
-                    this.showScrollBarX = false;
+                    this.isShowScrollBarX = false;
                 }
                 if (scrollContent.offsetHeight > scrollBox.offsetHeight) {
-                    this.showScrollBarY = true;
-                    this.$nextTick(function () {
-                        this.$refs.scrollBarYInner.onmousedown = this.onmousedownY
-                    })
+                    this.isShowScrollBarY = true;
                 } else {
-                    this.showScrollBarY = false;
+                    this.isShowScrollBarY = false;
                 }
             },
             onwheel(e) {
@@ -134,7 +132,7 @@
                 } else {
                     this.direction = 'vertical';
                     if (!this.flag && this.changeStatus) {
-                       return false
+                        return false
                     }
                     if (e.deltaY > 0) {
                         scrollBox.scrollTop += 100;
@@ -145,6 +143,7 @@
 
             },
             onmousedownY(_e) {
+                this.isDragY = true;
                 this.direction = 'vertical';
                 const {scrollBox,scrollBarY, scrollBarYInner} = this.$refs;
                 _e = _e || window.event
@@ -167,6 +166,7 @@
                     }
                 }
                 document.onmouseup = () => {
+                    this.isDragY = false;
                     this.scrollBarStyleY.background = this.initData.color;
                     document.onmousemove = null;
                     document.onmouseup = null
@@ -174,6 +174,7 @@
                 return false;
             },
             onmousedownX(_e) {
+                this.isDragX = true;
                 this.direction = 'horizontal';
                 const {scrollBox,scrollBarX, scrollBarXInner} = this.$refs;
                 _e = _e || window.event
@@ -196,6 +197,7 @@
                     }
                 }
                 document.onmouseup = () => {
+                    this.isDragX = false;
                     this.scrollBarStyleX.background = this.initData.color;
                     document.onmousemove = null;
                     document.onmouseup = null;
@@ -214,7 +216,7 @@
                     } else {
                         this.scrollBarStyleY.top = target.scrollTop* this.scrollObj.yRadix + 'px';
                         if (target.scrollTop === (target.scrollHeight - target.clientHeight)) {
-                            if (this.showScrollBarX) {
+                            if (this.isShowScrollBarX) {
                                 this.scrollBarStyleY.top = target.scrollTop* this.scrollObj.yRadix + 'px';
                             } else {
                                 this.scrollBarStyleY.top = target.scrollTop* this.scrollObj.yRadix - this.scrollObj.offsetX + 'px';
@@ -233,7 +235,7 @@
                     } else {
                         this.scrollBarStyleX.left = target.scrollLeft* this.scrollObj.xRadix + 'px';
                         if (target.scrollLeft === (target.scrollWidth - target.clientWidth)) {
-                            if (this.showScrollBarY) {
+                            if (this.isShowScrollBarY) {
                                 this.scrollBarStyleX.left = target.scrollLeft* this.scrollObj.xRadix + 'px';
                             } else {
                                 this.scrollBarStyleX.left = target.scrollLeft* this.scrollObj.xRadix - this.scrollObj.offsetY + 'px';
@@ -246,6 +248,9 @@
                 if (this.flag) {
                     this.$emit('scrollBottom', e);
                     this.flag = false;
+                    setTimeout(()=>{
+                        this.flag = true;
+                    },500)
                 }
             },
             scrollTopEvent(e) {
@@ -264,27 +269,22 @@
         mounted() {
             this.$nextTick(function () {
                 this.init();
-                let MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver
                 // 选择需要观察变动的节点
                 const targetNode = this.$refs.scrollContent;
-                // 观察器的配置（需要观察什么变动）
-                const config = {childList: true,characterData: true, attributes: true, attributeFilter: ['style', 'class'], attributeOldValue:true, subtree: true };
                 // 当观察到变动时执行的回调函数
-                const callback = (mutationsList, observer)=> {
+                const callback = (entries)=> {
                     this.changeStatus = true;
                     // Use traditional 'for loops' for IE 11
-                    for(let mutation of mutationsList) {
-                        setTimeout(() => {
-                            this.init();
-                            this.flag = true;
-                        }, 500);
-                    }
+                    this.isShowScrollBarX = false;
+                    this.isShowScrollBarY = false;
+                    this.init();
+                    this.flag = true;
                 };
                 // 创建一个观察器实例并传入回调函数
-                let observer = new MutationObserver(callback);
+                let observer = new ResizeObserver(callback);
 
                 // 以上述配置开始观察目标节点
-                observer.observe(targetNode, config);
+                observer.observe(targetNode);
                 window.onresize = (e) => {
                     this.init();
                 }
@@ -300,6 +300,18 @@
         position: relative;
         overflow: hidden;
     }
+    .ondragX {
+        opacity: 1;
+    }
+    .ondragY {
+        opacity: 1;
+    }
+    .scroll-container:hover .scroll-bar-x {
+        opacity: 1;
+    }
+    .scroll-container:hover .scroll-bar-y {
+        opacity: 1;
+    }
     .scroll-box {
         position: absolute; left: 0;
         overflow: auto;
@@ -312,6 +324,8 @@
         left: 0;
         width: 100%;
         background: #fff;
+        opacity: 0;
+        transition: .5s;
     }
     .scroll-bar-y {
         position: absolute;
@@ -319,6 +333,8 @@
         right: 0;
         top: 0;
         background: #fff;
+        opacity: 0;
+        transition: .5s;
     }
     .scroll-content {
         width: auto;
